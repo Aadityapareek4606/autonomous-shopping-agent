@@ -1,0 +1,8 @@
+streamlit
+python-dotenv
+langchain-google-genai
+langchain
+browser-use==0.13.10
+playwright
+requests
+pydantic-settings==2.15.0
