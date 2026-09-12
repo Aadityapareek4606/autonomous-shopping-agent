@@ -216,11 +216,11 @@ def add_site_badges(text):
     return text
 
 def extract_chart_data(comparison_text):
-    """Extracts lowest price per site per category — robust to varying text formats."""
+    """Extracts lowest price per site per category — robust to varying text/markdown formats."""
     import pandas as pd
 
-    header_site_pattern = re.compile(r'^\**\s*(Amazon\.in|Flipkart(?:\.com)?)\s*:?\s*\**$', re.IGNORECASE)
-    inline_site_pattern = re.compile(r'Site:?\s*\**\s*(Amazon\.in|Flipkart(?:\.com)?)', re.IGNORECASE)
+    header_site_pattern = re.compile(r'^(Amazon\.in|Flipkart(?:\.com)?)\s*:?\s*$', re.IGNORECASE)
+    inline_site_pattern = re.compile(r'Site\s*:?\s*(Amazon\.in|Flipkart(?:\.com)?)', re.IGNORECASE)
     price_pattern = re.compile(r'₹\s?([\d,]+\.?\d*)')
 
     def normalize_site(raw):
@@ -231,17 +231,21 @@ def extract_chart_data(comparison_text):
     current_site = None
 
     for raw_line in comparison_text.split('\n'):
-        stripped = raw_line.strip().lstrip('•-*').strip()
-        if not stripped:
+        # Strip markdown noise: bold markers, bullets, heading hashes
+        line = raw_line.strip()
+        line = line.lstrip('#').strip()
+        line = line.lstrip('•-*').strip()
+        line = line.replace('**', '').replace('*', '').strip()
+        if not line:
             continue
 
-        header_match = header_site_pattern.match(stripped)
+        header_match = header_site_pattern.match(line)
         if header_match:
             current_site = normalize_site(header_match.group(1))
             continue
 
-        price_match = price_pattern.search(stripped)
-        inline_site_match = inline_site_pattern.search(stripped)
+        price_match = price_pattern.search(line)
+        inline_site_match = inline_site_pattern.search(line)
 
         if price_match:
             site = normalize_site(inline_site_match.group(1)) if inline_site_match else current_site
@@ -251,12 +255,12 @@ def extract_chart_data(comparison_text):
             continue
 
         if (
-            not stripped[0].isdigit()
-            and len(stripped) < 60
-            and not price_pattern.search(stripped)
-            and 'site:' not in stripped.lower()
+            not line[0].isdigit()
+            and len(line) < 60
+            and not price_pattern.search(line)
+            and 'site' not in line.lower()
         ):
-            current_category = stripped.rstrip(':').strip()
+            current_category = line.rstrip(':').strip()
             current_site = None
 
     if not data:
