@@ -67,7 +67,6 @@ Create a `.env` file in the project root:
 ```
 GOOGLE_API_KEY=your_gemini_api_key
 ANAKIN_API_KEY=your_anakin_api_key
-ANAKIN_APP_ID=your_anakin_app_id
 ```
 
 4. **Run the app**
