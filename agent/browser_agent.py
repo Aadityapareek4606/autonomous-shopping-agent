@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from browser_use import Agent, ChatGoogle
+from browser_use import Agent, ChatGoogle, Browser
 
 load_dotenv()
 
@@ -11,6 +11,16 @@ def get_fallback_llm():
     """Backup LLM used automatically if the primary model is overloaded (503/429 errors)."""
     return ChatGoogle(model="gemini-3.6-flash")
 
+def get_browser():
+    """
+    Browser configured for headless operation (no visible window) —
+    required for running on cloud servers like Streamlit Cloud.
+    """
+    return Browser(
+        headless=True,
+        args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+    )
+
 async def run_shopping_task(task: str):
     """
     Runs a browser automation task using browser-use + Gemini.
@@ -18,9 +28,11 @@ async def run_shopping_task(task: str):
     """
     llm = get_llm()
     fallback_llm = get_fallback_llm()
-    agent = Agent(task=task, llm=llm, fallback_llm=fallback_llm)
+    browser = get_browser()
+    agent = Agent(task=task, llm=llm, fallback_llm=fallback_llm, browser=browser)
     result = await agent.run()
     return result
+
 async def run_multi_item_task(items: list[str], budget: float, currency: str = "INR"):
     """
     Searches for multiple items across Amazon.in and Flipkart,
@@ -46,6 +58,7 @@ async def run_multi_item_task(items: list[str], budget: float, currency: str = "
     )
     llm = get_llm()
     fallback_llm = get_fallback_llm()
-    agent = Agent(task=task, llm=llm, fallback_llm=fallback_llm)
+    browser = get_browser()
+    agent = Agent(task=task, llm=llm, fallback_llm=fallback_llm, browser=browser)
     result = await agent.run()
     return result
