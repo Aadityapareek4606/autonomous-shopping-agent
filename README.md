@@ -14,6 +14,7 @@ Give it a list of items and a total budget (e.g. *"phone charger, bluetooth earb
 - Displays a **visual budget bar** showing spend vs. total budget
 This goes beyond simple product search — it's an agent making genuine purchasing decisions across multiple sites and constraints, the same way a human comparison-shopper would.
 The agent self-corrects when pages don't load as expected, elements shift, popups appear, or the AI model is temporarily overloaded — automatically falling back to a secondary model to keep the task running.
+**Note:** While the examples below use electronics, this agent works for *any* product category — clothing, household items, groceries, books, etc. The AI reasoning is generic, not hardcoded for specific product types.
 
 ## ✨ UI Highlights
 - **Live progress updates** — real-time status messages while the agent works ("Searching Amazon.in...", "Comparing prices...")
