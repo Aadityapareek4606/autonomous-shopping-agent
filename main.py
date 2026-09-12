@@ -216,22 +216,48 @@ def add_site_badges(text):
     return text
 
 def extract_chart_data(comparison_text):
-    """Extracts lowest price per site per category for a bar chart."""
+    """Extracts lowest price per site per category — robust to varying text formats."""
     import pandas as pd
-    categories = re.split(r'\n(?=[A-Za-z ]+:\n)', comparison_text)
+
+    site_pattern = re.compile(r'^\**\s*(Amazon\.in|Flipkart(?:\.com)?)\s*:?\s*\**$', re.IGNORECASE)
+    price_pattern = re.compile(r'₹\s?([\d,]+\.?\d*)')
+
     data = []
-    for block in categories:
-        cat_match = re.match(r'([A-Za-z ]+):', block)
-        if not cat_match:
+    current_category = None
+    current_site = None
+
+    for raw_line in comparison_text.split('\n'):
+        stripped = raw_line.strip()
+        if not stripped:
             continue
-        category = cat_match.group(1).strip()
-        amazon_prices = re.findall(r'Amazon\.in.*?₹([\d,]+)', block)
-        flipkart_prices = re.findall(r'Flipkart\.com.*?₹([\d,]+)', block)
-        if amazon_prices:
-            data.append({"Category": category, "Site": "Amazon.in", "Price": min(int(p.replace(",", "")) for p in amazon_prices)})
-        if flipkart_prices:
-            data.append({"Category": category, "Site": "Flipkart", "Price": min(int(p.replace(",", "")) for p in flipkart_prices)})
-    return pd.DataFrame(data) if data else None
+
+        site_match = site_pattern.match(stripped)
+        if site_match:
+            current_site = "Amazon.in" if "amazon" in site_match.group(1).lower() else "Flipkart"
+            continue
+
+        price_match = price_pattern.search(stripped)
+        if price_match and current_site and current_category:
+            price = int(price_match.group(1).replace(",", ""))
+            data.append({"Category": current_category, "Site": current_site, "Price": price})
+            continue
+
+        # Treat short, non-bulleted, price-free lines as a new category heading
+        if (
+            not stripped[0].isdigit()
+            and not stripped.startswith(('-', '•', '*'))
+            and len(stripped) < 60
+            and not price_pattern.search(stripped)
+        ):
+            current_category = stripped.rstrip(':').strip()
+            current_site = None
+
+    if not data:
+        return None
+
+    df = pd.DataFrame(data)
+    df = df.groupby(["Category", "Site"], as_index=False)["Price"].min()
+    return df
 
 def run_with_progress(coro, messages, interval=4):
     """Runs an async agent task while cycling through status messages in the UI."""
